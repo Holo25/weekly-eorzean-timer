@@ -1,6 +1,8 @@
 package com.holo25.weeklyeorzeantimer
 
 import android.icu.text.RelativeDateTimeFormatter
+import android.icu.text.RelativeDateTimeFormatter.Direction
+import android.icu.text.RelativeDateTimeFormatter.RelativeUnit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
@@ -19,9 +21,9 @@ import java.util.Locale
 
 class MainViewModel : ViewModel() {
 
-    // TODO Add DI
+    // TODO Add DI framework for these
     private val clock = Clock.systemUTC()
-    //private val formatter = RelativeDateTimeFormatter.getInstance()
+    private val formatter = RelativeDateTimeFormatter.getInstance()
 
     private val _time = MutableStateFlow(formattedTime())
 
@@ -32,35 +34,24 @@ class MainViewModel : ViewModel() {
             //TODO refine this infinite cycle
             while (true) {
                 _time.value = getTimeToWeeklyReset()
-                delay(1000 * 60)
+                delay(1000)
             }
         }
     }
 
     private fun getTimeToWeeklyReset(): String {
-        // TODO Decide on which implementation to use
         var remainingTime = ""
-        val remainingTimeDuration = getRemainingTimeUntilReset()
-//        val remainingDays = formatter.format(
-//            remainingTimeDuration.toDays().toDouble(),
-//            RelativeDateTimeFormatter.Direction.NEXT,
-//            RelativeUnit.DAYS
-//        )
-//        val remainingHours = formatter.format(
-//            (remainingTimeDuration.toHours() % 24).toDouble(),
-//            RelativeDateTimeFormatter.Direction.NEXT,
-//            RelativeUnit.HOURS
-//        )
-//        val remainingMinutes = formatter.format(
-//            (remainingTimeDuration.toMinutes() % 60).toDouble(),
-//            RelativeDateTimeFormatter.Direction.NEXT,
-//            RelativeUnit.MINUTES
-//        )
-//
-//        return formatter.combineDateAndTime(remainingDays, "$remainingHours, $remainingMinutes")
-        if (remainingTimeDuration.toDays() > 0) remainingTime += "${remainingTimeDuration.toDays()}D "
-        remainingTime += "${(remainingTimeDuration.toHours() % 24)}H "
-        remainingTime += "${remainingTimeDuration.toMinutes() % 60}S"
+        val remainingDuration = getRemainingTimeUntilReset()
+        val remainingDays = formatter.format(
+            remainingDuration.toDays().toDouble(),
+            Direction.NEXT,
+            RelativeUnit.DAYS
+        )
+
+        if (remainingDuration.toDays() > 0) remainingTime += "$remainingDays, "
+        remainingTime += "${(remainingDuration.toHours() % 24)}" +
+                ":${remainingDuration.toMinutes() % 60}" +
+                ":${remainingDuration.seconds % 60}"
 
         return remainingTime
     }
