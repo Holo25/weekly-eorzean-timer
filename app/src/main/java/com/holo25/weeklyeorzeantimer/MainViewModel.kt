@@ -48,6 +48,7 @@ class MainViewModel : ViewModel() {
             RelativeUnit.DAYS
         )
 
+        // TODO Hour/minute/second must be formatted correctly
         if (remainingDuration.toDays() > 0) remainingTime += "$remainingDays, "
         remainingTime += "${(remainingDuration.toHours() % 24)}" +
                 ":${remainingDuration.toMinutes() % 60}" +
