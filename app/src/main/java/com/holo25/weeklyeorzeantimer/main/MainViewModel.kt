@@ -1,4 +1,4 @@
-package com.holo25.weeklyeorzeantimer
+package com.holo25.weeklyeorzeantimer.main
 
 import android.icu.text.RelativeDateTimeFormatter
 import android.icu.text.RelativeDateTimeFormatter.Direction
@@ -10,14 +10,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.ZonedDateTime
 import java.time.temporal.TemporalAdjusters
-import java.util.GregorianCalendar
-import java.util.Locale
 
 class MainViewModel : ViewModel() {
 
@@ -25,36 +22,35 @@ class MainViewModel : ViewModel() {
     private val clock = Clock.systemUTC()
     private val formatter = RelativeDateTimeFormatter.getInstance()
 
-    private val _time = MutableStateFlow(formattedTime())
+    private val _resetTime = MutableStateFlow(getTimeToWeeklyReset())
 
-    val time: StateFlow<String> = _time.asStateFlow()
+    val resetTime: StateFlow<ResetTime> = _resetTime.asStateFlow()
 
     init {
         viewModelScope.launch {
             //TODO refine this infinite cycle
             while (true) {
-                _time.value = getTimeToWeeklyReset()
                 delay(1000)
+                _resetTime.value = getTimeToWeeklyReset()
             }
         }
     }
 
-    private fun getTimeToWeeklyReset(): String {
-        var remainingTime = ""
+    private fun getTimeToWeeklyReset(): ResetTime {
         val remainingDuration = getRemainingTimeUntilReset()
         val remainingDays = formatter.format(
             remainingDuration.toDays().toDouble(),
             Direction.NEXT,
             RelativeUnit.DAYS
         )
+        val remainingTime = String.format(
+            "%d:%02d:%02d",
+            remainingDuration.toHours() % 24,
+            remainingDuration.toMinutes() % 60,
+            remainingDuration.seconds % 60
+        )
 
-        // TODO Hour/minute/second must be formatted correctly
-        if (remainingDuration.toDays() > 0) remainingTime += "$remainingDays, "
-        remainingTime += "${(remainingDuration.toHours() % 24)}" +
-                ":${remainingDuration.toMinutes() % 60}" +
-                ":${remainingDuration.seconds % 60}"
-
-        return remainingTime
+        return ResetTime(remainingDays, remainingTime)
     }
 
     private fun getRemainingTimeUntilReset(): Duration {
@@ -68,7 +64,4 @@ class MainViewModel : ViewModel() {
 
         return Duration.between(currentTime, nextResetTime)
     }
-
-    private fun formattedTime() = SimpleDateFormat("H:mm:ss", Locale.ENGLISH)
-        .format(GregorianCalendar.getInstance().time)
 }

@@ -1,4 +1,4 @@
-package com.holo25.weeklyeorzeantimer
+package com.holo25.weeklyeorzeantimer.main
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun ResetTimerList(viewModel: MainViewModel = viewModel()) {
-    val weeklyReset = viewModel.time.collectAsState().value
+    val weeklyReset = viewModel.resetTime.collectAsState().value
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -55,7 +55,7 @@ fun ResetTimerList(viewModel: MainViewModel = viewModel()) {
 @Composable
 fun ResetCountdown(
     name: String,
-    time: String
+    resetTime: ResetTime
 ) {
     Column {
         Text(
@@ -65,7 +65,12 @@ fun ResetCountdown(
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = time,
+            text = resetTime.remainingDays,
+            fontSize = 20.sp,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        Text(
+            text = resetTime.remainingTime,
             fontSize = 20.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )

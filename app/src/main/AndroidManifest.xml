@@ -13,7 +13,7 @@
         android:theme="@style/Theme.WeeklyEorzeanTimer"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".main.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.WeeklyEorzeanTimer">
             <intent-filter>
