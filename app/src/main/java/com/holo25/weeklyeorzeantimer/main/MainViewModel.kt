@@ -24,6 +24,10 @@ class MainViewModel @Inject constructor(
     private val formatter: RelativeDateTimeFormatter
 ) : ViewModel() {
 
+    companion object {
+        const val REFRESH_INTERVAL: Long = 1000 // ms
+    }
+
     private val _resetTime = MutableStateFlow(getTimeToWeeklyReset())
 
     val resetTime: StateFlow<ResetTime> = _resetTime.asStateFlow()
@@ -32,7 +36,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             //TODO refine this infinite cycle
             while (true) {
-                delay(1000)
+                delay(REFRESH_INTERVAL)
                 _resetTime.value = getTimeToWeeklyReset()
             }
         }
@@ -46,7 +50,7 @@ class MainViewModel @Inject constructor(
             RelativeUnit.DAYS
         )
         val remainingTime = String.format(
-            "%d:%02d:%02d",
+            "%02d:%02d:%02d",
             remainingDuration.toHours() % 24,
             remainingDuration.toMinutes() % 60,
             remainingDuration.seconds % 60
