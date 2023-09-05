@@ -5,6 +5,7 @@ import android.icu.text.RelativeDateTimeFormatter.Direction
 import android.icu.text.RelativeDateTimeFormatter.RelativeUnit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,12 +16,13 @@ import java.time.DayOfWeek
 import java.time.Duration
 import java.time.ZonedDateTime
 import java.time.temporal.TemporalAdjusters
+import javax.inject.Inject
 
-class MainViewModel : ViewModel() {
-
-    // TODO Add DI framework for these
-    private val clock = Clock.systemUTC()
-    private val formatter = RelativeDateTimeFormatter.getInstance()
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val clock: Clock,
+    private val formatter: RelativeDateTimeFormatter
+) : ViewModel() {
 
     private val _resetTime = MutableStateFlow(getTimeToWeeklyReset())
 
@@ -37,7 +39,7 @@ class MainViewModel : ViewModel() {
     }
 
     private fun getTimeToWeeklyReset(): ResetTime {
-        val remainingDuration = getRemainingTimeUntilReset()
+        val remainingDuration = getRemainingTimeUntilWeeklyReset()
         val remainingDays = formatter.format(
             remainingDuration.toDays().toDouble(),
             Direction.NEXT,
@@ -53,7 +55,7 @@ class MainViewModel : ViewModel() {
         return ResetTime(remainingDays, remainingTime)
     }
 
-    private fun getRemainingTimeUntilReset(): Duration {
+    private fun getRemainingTimeUntilWeeklyReset(): Duration {
         val currentTime = ZonedDateTime.now(clock)
         // Weekly reset time is at 08:00 UTC every Tuesday
         val nextResetTime = currentTime.with(TemporalAdjusters.nextOrSame(DayOfWeek.TUESDAY))
@@ -62,6 +64,14 @@ class MainViewModel : ViewModel() {
             .withSecond(0)
             .withNano(0)
 
-        return Duration.between(currentTime, nextResetTime)
+        val duration = Duration.between(currentTime, nextResetTime)
+
+        // Using .nextOrSame(...) only works pre-reset time on the day of the reset.
+        // After the reset we need to use .next(...) to get the next week's reset time.
+        return if (duration.isNegative) {
+            Duration.between(currentTime, nextResetTime.with(TemporalAdjusters.next(DayOfWeek.TUESDAY)))
+        } else {
+            duration
+        }
     }
 }
